@@ -49,9 +49,14 @@ body {
   word-break: break-word;
 }
 /* Decorative "=" dividers outside the scrollable tables: stop at the
-   viewport edge instead of word-wrapping onto a second line. */
+   viewport edge instead of word-wrapping onto a second line. inline-block
+   (not block) so it doesn't force its own line break in addition to the
+   literal "\n" already following it in the <pre> text -- that combination
+   was rendering as a stray blank line above the banner. */
 .doc pre .rule {
-  display: block;
+  display: inline-block;
+  width: 100%;
+  vertical-align: top;
   white-space: nowrap;
   overflow: hidden;
 }

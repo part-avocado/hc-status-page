@@ -333,13 +333,18 @@ function serviceHref(id: string): string {
   return `/service/${encodeURIComponent(id)}`;
 }
 
+// Thresholds for the per-day history glyph (#, +, x): degraded once a day's
+// ping success rate drops below 95%, broken once it drops below 80%.
+const DAY_DEGRADED_BELOW_PCT = 95;
+const DAY_DOWN_BELOW_PCT = 80;
+
 function historyChar(pct: number | null): { ch: string; cls: "up" | "warn" | "down" | "none" } {
   // "·" (middle dot) instead of a period so the no-data glyph sits
   // vertically centered like the other marks, not baseline/bottom.
   if (pct == null) return { ch: "·", cls: "none" };
-  if (pct >= 99.9) return { ch: "#", cls: "up" };
-  if (pct >= 95) return { ch: "+", cls: "warn" };
-  return { ch: "x", cls: "down" };
+  if (pct < DAY_DOWN_BELOW_PCT) return { ch: "x", cls: "down" };
+  if (pct < DAY_DEGRADED_BELOW_PCT) return { ch: "+", cls: "warn" };
+  return { ch: "#", cls: "up" };
 }
 
 function historyLabel(cls: "up" | "warn" | "down" | "none"): string {
