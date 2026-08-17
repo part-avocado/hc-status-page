@@ -348,16 +348,21 @@ function historyDaySpan(d: DayBucket): string {
   return `<span class="hday hist-${cls}">${ch}<span class="tt"><b class="hist-${cls}">${historyLabel(cls)}</b>${detail}</span></span>`;
 }
 
+// Placeholder for now -- content TBD.
+function footerHtml(): string {
+  return `<pre class="dim footer">made by <a href="https://hackclub.enterprise.slack.com/team/U0A06EPFV45">@partavocado</a> :3</pre>`;
+}
+
 function bannerLine(overall: Overall): string {
   switch (overall) {
     case "operational":
-      return "ALL SYSTEMS OPERATIONAL";
+      return "it's working";
     case "degraded":
-      return "DEGRADED PERFORMANCE";
+      return "it's slowed";
     case "major_outage":
-      return "MAJOR OUTAGE";
+      return "it's gone";
     case "unknown":
-      return "STATUS UNKNOWN (no data yet)";
+      return "don't ask me gng";
   }
 }
 
@@ -501,6 +506,7 @@ export function renderHtml(data: StatusData, tz: string): string {
 <div class="doc">
 <pre>${intro.join("\n")}</pre>
 ${sections.join("\n")}
+${footerHtml()}
 </div>
 </body>
 </html>
@@ -567,6 +573,7 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
 <body>
 <div class="doc">
 <pre class="detail-table">${lines.join("\n")}</pre>
+${footerHtml()}
 </div>
 </body>
 </html>

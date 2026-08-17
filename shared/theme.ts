@@ -61,6 +61,7 @@ details.group[open] summary::before { content: "[-] "; }
 .hist-none { color: var(--none); }
 .dim { color: var(--dim); }
 .detail-table { margin-top: 1em; }
+.footer { margin-top: 3em; text-align: center; }
 .hday { position: relative; }
 .hday .tt {
   position: absolute;
