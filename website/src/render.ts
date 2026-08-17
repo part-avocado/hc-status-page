@@ -8,6 +8,9 @@ function isPrivate(id: string): boolean {
 
 export interface Env {
   DB: D1Database;
+  // Shared secret for the authenticated /api/* JSON routes. Set via
+  // `wrangler secret put API_KEY` -- unset means /api/* is unreachable.
+  API_KEY?: string;
 }
 
 interface CurrentStatusRow {
@@ -385,9 +388,8 @@ function historyDaySpan(d: DayBucket): string {
   return `<span class="hday hist-${cls}">${ch}<span class="tt"><b class="hist-${cls}">${historyLabel(cls)}</b>${detail}</span></span>`;
 }
 
-// Placeholder for now -- content TBD.
 function footerHtml(): string {
-  return `<pre class="dim footer">made by <a href="https://hackclub.enterprise.slack.com/team/U0A06EPFV45">@partavocado</a> :3</pre>`;
+  return `<pre class="dim footer">made by <a href="https://hackclub.enterprise.slack.com/team/U0A06EPFV45">@partavocado</a> :3 &middot; <a href="/docs">API docs</a></pre>`;
 }
 
 function bannerLine(overall: Overall): string {
@@ -459,36 +461,6 @@ function dataRow(ep: EndpointStatus) {
     u30: fmtPct(ep.uptime30d).padStart(COL_NUM),
     u90: fmtPct(ep.uptime90d).padStart(COL_NUM),
   };
-}
-
-export function renderText(data: StatusData, tz: string): string {
-  const lines: string[] = [];
-  lines.push("# hackclub status");
-  lines.push(`# updated ${fmtTimestampTz(data.generatedAt, tz)}`);
-  lines.push("");
-  lines.push(`# Timestamps above are shown in your local time (detected: ${tz}). Day buckets below are formatted in UTC.`);
-  lines.push("");
-  lines.push("=".repeat(TABLE_WIDTH));
-  lines.push(`  ${bannerLine(data.overall)}`);
-  lines.push("=".repeat(TABLE_WIDTH));
-  for (const group of data.groups) {
-    lines.push("");
-    lines.push("");
-    lines.push(group.name.toUpperCase());
-    lines.push("=".repeat(TABLE_WIDTH));
-    lines.push(headerRow());
-    lines.push("-".repeat(TABLE_WIDTH));
-    for (const ep of group.endpoints) {
-      const r = dataRow(ep);
-      const hist = ep.history.map((d) => historyChar(d.pct).ch).join("");
-      lines.push(`${r.status}${r.service}${r.u7}${r.u30}${r.u90}`);
-      lines.push(`${" ".repeat(COL_STATUS)}${hist}`);
-      if (ep.error) lines.push(`${" ".repeat(COL_STATUS)}${ep.error}`);
-      lines.push("");
-    }
-  }
-  lines.push("");
-  return lines.join("\n");
 }
 
 const CSS = BASE_CSS;
