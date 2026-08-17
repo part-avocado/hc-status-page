@@ -90,6 +90,25 @@ function isoDate(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+// A service is "degraded" once today's ping success rate drops below this,
+// and "down" once it drops below the lower threshold -- rather than judging
+// health off a single latest check.
+const DEGRADED_BELOW_PCT = 90;
+const DOWN_BELOW_PCT = 70;
+
+// Classifies live health off today's running success rate (checks that
+// returned within their configured timeout vs. total checks so far today).
+// Falls back to the single latest check when today has no samples yet (e.g.
+// just after UTC midnight, before the next ping has run).
+function classifyHealth(cur: CurrentStatusRow | null | undefined, todayStats: DailyStatsRow | undefined): Health {
+  if (!cur) return "unknown";
+  if (!todayStats || todayStats.checks === 0) return cur.ok ? "up" : "down";
+  const pct = (todayStats.up_checks / todayStats.checks) * 100;
+  if (pct < DOWN_BELOW_PCT) return "down";
+  if (pct < DEGRADED_BELOW_PCT) return "degraded";
+  return "up";
+}
+
 function uptimeOver(daily: Map<string, DailyStatsRow>, days: number, now: number): number | null {
   let checks = 0;
   let up = 0;
@@ -148,13 +167,7 @@ export async function gatherStatus(env: Env): Promise<StatusData> {
     const cur = currentById.get(ep.id);
     const dailyMap = dailyByEndpoint.get(ep.id) ?? new Map<string, DailyStatsRow>();
 
-    let health: Health = "unknown";
-    if (cur) {
-      if (!cur.ok) health = "down";
-      else if (ep.degradedLatencyMs != null && cur.latency_ms != null && cur.latency_ms > ep.degradedLatencyMs)
-        health = "degraded";
-      else health = "up";
-    }
+    const health = classifyHealth(cur, dailyMap.get(isoDate(now)));
 
     const history: DayBucket[] = [];
     for (let i = BAR_DAYS - 1; i >= 0; i--) {
@@ -245,12 +258,7 @@ export async function gatherEndpointDetail(env: Env, id: string): Promise<Endpoi
 
   const dailyMap = new Map(daily.results.map((r) => [r.date, r]));
 
-  let health: Health = "unknown";
-  if (cur) {
-    if (!cur.ok) health = "down";
-    else if (ep.degradedLatencyMs != null && cur.latency_ms != null && cur.latency_ms > ep.degradedLatencyMs) health = "degraded";
-    else health = "up";
-  }
+  const health = classifyHealth(cur, dailyMap.get(isoDate(now)));
 
   const days: DayDetail[] = [];
   for (let i = UPTIME_DAYS - 1; i >= 0; i--) {
@@ -312,6 +320,13 @@ function padDots(s: string, width: number): string {
 function padDotsTail(s: string, width: number): string {
   if (s.length >= width) return " ";
   return " " + ".".repeat(Math.max(1, width - s.length - 1)) + " ";
+}
+
+// A decorative "=" divider line, wrapped so it can be styled to stop at the
+// viewport edge on narrow screens instead of word-wrapping onto a second
+// line (see .rule in shared/theme.ts).
+function ruleLine(width: number): string {
+  return `<span class="rule">${"=".repeat(width)}</span>`;
 }
 
 function serviceHref(id: string): string {
@@ -473,22 +488,9 @@ function groupTableHtml(group: StatusGroup): string {
   return `<pre class="mono-table">${lines.join("\n")}</pre>`;
 }
 
-// Forces every horizontally-scrollable table back to scrollLeft 0 on load.
-// Browsers try to restore scroll containers' scroll offsets across a
-// same-URL reload by matching up structurally-similar elements -- since
-// every table on a page has an identical shape, a sideways scroll on any
-// one of them (from a trackpad nudge, etc.) can get reapplied to *all* of
-// them on the next reload, permanently hiding the left columns.
-const TABLE_SCROLL_RESET_SCRIPT = `function () {
-  document.querySelectorAll(".mono-table").forEach(function (el) {
-    el.scrollLeft = 0;
-  });
-}`;
-
-// Runs the scroll reset above plus, on the main page only, restores each
-// collapsible group's open/closed state from localStorage (overriding the
-// server-rendered default) and keeps it saved on toggle -- so both survive
-// the page's 60s meta-refresh reload.
+// Restores each collapsible group's open/closed state from localStorage
+// (overriding the server-rendered default) and keeps it saved on toggle --
+// so it survives the page's 120s meta-refresh reload.
 const PAGE_SCRIPT = `(function () {
   var KEY = "hcstatus:groupOpen";
   var state = {};
@@ -501,15 +503,6 @@ const PAGE_SCRIPT = `(function () {
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
     });
   });
-  var resetTableScroll = (${TABLE_SCROLL_RESET_SCRIPT});
-  resetTableScroll();
-  window.addEventListener("load", resetTableScroll);
-})();`;
-
-const DETAIL_PAGE_SCRIPT = `(function () {
-  var resetTableScroll = (${TABLE_SCROLL_RESET_SCRIPT});
-  resetTableScroll();
-  window.addEventListener("load", resetTableScroll);
 })();`;
 
 export function renderHtml(data: StatusData, tz: string): string {
@@ -519,9 +512,9 @@ export function renderHtml(data: StatusData, tz: string): string {
   intro.push("");
   intro.push(`! Timestamps above are shown in your local time (detected: ${escapeHtml(tz)}). Day buckets below are UTC calendar days.`);
   intro.push("");
-  intro.push("=".repeat(TABLE_WIDTH));
+  intro.push(ruleLine(TABLE_WIDTH));
   intro.push(`  <span class="banner banner-${data.overall}">${bannerLine(data.overall)}</span>`);
-  intro.push("=".repeat(TABLE_WIDTH));
+  intro.push(ruleLine(TABLE_WIDTH));
 
   const sections = data.groups.map((group) => {
     const name = escapeHtml(group.name.toUpperCase());
@@ -537,7 +530,7 @@ export function renderHtml(data: StatusData, tz: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="60">
+<meta http-equiv="refresh" content="120">
 <title>hackclub status</title>
 <style>${CSS}</style>
 </head>
@@ -615,7 +608,6 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
 <pre class="detail-table mono-table">${lines.join("\n")}</pre>
 ${footerHtml()}
 </div>
-<script>${DETAIL_PAGE_SCRIPT}</script>
 </body>
 </html>
 `;

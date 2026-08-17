@@ -9,6 +9,12 @@ interface Env {
 /** Daily rollups older than this are pruned. */
 const RETENTION_DAYS = 90;
 
+// Cloudflare Cron Triggers only support minute-level granularity, so the
+// scheduled handler fires every minute but skips runs until this much time
+// has actually elapsed since the last check -- approximating a 90s interval
+// (real spacing alternates ~60s/~120s rather than landing exactly on 90s).
+const MIN_CHECK_INTERVAL_MS = 90_000;
+
 interface CheckResult {
   id: string;
   ok: 0 | 1;
@@ -97,9 +103,18 @@ async function runChecks(env: Env): Promise<CheckResult[]> {
   return results;
 }
 
+async function dueForCheck(db: D1Database): Promise<boolean> {
+  const row = await db.prepare("SELECT MAX(checked_at) AS last FROM current_status").first<{ last: number | null }>();
+  return row?.last == null || Date.now() - row.last >= MIN_CHECK_INTERVAL_MS;
+}
+
 export default {
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(runChecks(env));
+    ctx.waitUntil(
+      (async () => {
+        if (await dueForCheck(env.DB)) await runChecks(env);
+      })(),
+    );
   },
   async fetch(_req, env) {
     const results = await runChecks(env);
