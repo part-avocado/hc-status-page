@@ -48,6 +48,13 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* Decorative "=" dividers outside the scrollable tables: stop at the
+   viewport edge instead of word-wrapping onto a second line. */
+.doc pre .rule {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+}
 /* Fixed-width column tables would have their alignment destroyed by the
    word-wrapping above on narrow screens, so they scroll horizontally
    instead of wrapping. */

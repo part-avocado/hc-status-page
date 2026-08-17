@@ -2,6 +2,9 @@ name = "hcdown-pinger"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
+# Fires every minute (Cloudflare Cron Triggers can't go finer than that);
+# the scheduled handler in src/index.ts throttles actual checks to roughly
+# a 90s cadence from there.
 [triggers]
 crons = ["*/1 * * * *"]
 
