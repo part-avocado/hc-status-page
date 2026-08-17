@@ -42,7 +42,8 @@ a:hover { text-decoration: underline solid; }
 .banner-operational { color: var(--up); }
 .banner-degraded { color: var(--warn); }
 .banner-major_outage, .banner-unknown { color: var(--down); }
-.group-name { font-weight: bold; margin-top: 3em; }
+.group-name { font-weight: bold; }
+.doc pre.group-name { margin-top: 3em; }
 details.group { margin-top: 3em; }
 details.group summary.group-name { margin-top: 0; cursor: pointer; }
 details.group summary::-webkit-details-marker { display: none; }
