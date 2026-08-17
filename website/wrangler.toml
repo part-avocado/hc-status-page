@@ -7,7 +7,6 @@ binding = "DB"
 database_name = "hcdown"
 database_id = "55eda029-ecd1-4751-a204-8e2a023b76f0"
 
-# Shared secret for the authenticated /api/* routes (see docs/API.md).
-# Not set here -- it's a real secret, not a var:
-#   wrangler secret put API_KEY --name hcdown-website
-# Leaving it unset makes /api/* unreachable (checkApiKey always fails).
+# The authenticated /api/* routes (see docs/API.md) check keys stored in
+# the api_keys D1 table above -- create/revoke them from /admin, no
+# separate secret to configure here.

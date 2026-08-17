@@ -52,10 +52,10 @@ HTML detail page for one endpoint (history, latency, uptime windows).
 
 ## Authenticated API
 
-These endpoints require a shared API key, set once by the operator via
-`wrangler secret put API_KEY --name hcdown-website` (see the [README](../README.md)).
-There's no self-serve key issuance -- it's a single secret, same as every
-other credential in this project.
+These endpoints require an API key, created from the `/admin` page (protected
+by Cloudflare Access, same as the rest of admin). Enter a name for the key
+and submit -- the plaintext value is shown **once**, immediately after
+creation, and never again. Revoke a key any time from the same page.
 
 Send it as a bearer token:
 

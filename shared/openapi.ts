@@ -22,7 +22,9 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      description: Send as \`Authorization: Bearer <API_KEY>\`.
+      description: >
+        Send as \`Authorization: Bearer <API_KEY>\`. Keys are created and
+        revoked from /admin, shown once at creation time.
   schemas:
     Health:
       type: string
