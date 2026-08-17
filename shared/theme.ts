@@ -68,6 +68,11 @@ body {
   white-space: pre;
 }
 a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+/* The service name link's own dotted underline runs at a different pitch
+   than the "...." fill characters right after it, so the two together read
+   as unevenly-spaced dots. Drop the underline there -- the fill dots and
+   hover state are affordance enough. */
+.mono-table a { text-decoration: none; }
 .banner { font-weight: bold; }
 .banner-operational { color: var(--up); }
 .banner-degraded { color: var(--warn); }
