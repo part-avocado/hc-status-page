@@ -53,4 +53,16 @@ export const endpoints: EndpointConfig[] = [
     group: "YSWS",
     url: "https://stardance.hackclub.com/up",
   },
+  {
+    id: "macondo-ysws",
+    name: "Macondo - YSWS",
+    group: "YSWS",
+    url: "https://macondo.hackclub.com",
+  },
+  {
+    id: "braize-ysws",
+    name: "Braize - YSWS",
+    group: "YSWS",
+    url: "https://braize.hackclub.com",
+  },
 ];
