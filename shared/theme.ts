@@ -56,13 +56,11 @@ body {
   overflow: hidden;
 }
 /* Fixed-width column tables would have their alignment destroyed by the
-   word-wrapping above on narrow screens, so they scroll horizontally
-   instead of wrapping. */
+   word-wrapping above on narrow screens, so they stay unwrapped -- if a
+   table is wider than the viewport, the whole page scrolls horizontally
+   rather than the table owning its own scroll container. */
 .doc pre.mono-table {
   white-space: pre;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
 }
 a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
 .banner { font-weight: bold; }

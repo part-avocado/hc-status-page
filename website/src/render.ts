@@ -488,22 +488,9 @@ function groupTableHtml(group: StatusGroup): string {
   return `<pre class="mono-table">${lines.join("\n")}</pre>`;
 }
 
-// Forces every horizontally-scrollable table back to scrollLeft 0 on load.
-// Browsers try to restore scroll containers' scroll offsets across a
-// same-URL reload by matching up structurally-similar elements -- since
-// every table on a page has an identical shape, a sideways scroll on any
-// one of them (from a trackpad nudge, etc.) can get reapplied to *all* of
-// them on the next reload, permanently hiding the left columns.
-const TABLE_SCROLL_RESET_SCRIPT = `function () {
-  document.querySelectorAll(".mono-table").forEach(function (el) {
-    el.scrollLeft = 0;
-  });
-}`;
-
-// Runs the scroll reset above plus, on the main page only, restores each
-// collapsible group's open/closed state from localStorage (overriding the
-// server-rendered default) and keeps it saved on toggle -- so both survive
-// the page's 120s meta-refresh reload.
+// Restores each collapsible group's open/closed state from localStorage
+// (overriding the server-rendered default) and keeps it saved on toggle --
+// so it survives the page's 120s meta-refresh reload.
 const PAGE_SCRIPT = `(function () {
   var KEY = "hcstatus:groupOpen";
   var state = {};
@@ -516,15 +503,6 @@ const PAGE_SCRIPT = `(function () {
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
     });
   });
-  var resetTableScroll = (${TABLE_SCROLL_RESET_SCRIPT});
-  resetTableScroll();
-  window.addEventListener("load", resetTableScroll);
-})();`;
-
-const DETAIL_PAGE_SCRIPT = `(function () {
-  var resetTableScroll = (${TABLE_SCROLL_RESET_SCRIPT});
-  resetTableScroll();
-  window.addEventListener("load", resetTableScroll);
 })();`;
 
 export function renderHtml(data: StatusData, tz: string): string {
@@ -630,7 +608,6 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
 <pre class="detail-table mono-table">${lines.join("\n")}</pre>
 ${footerHtml()}
 </div>
-<script>${DETAIL_PAGE_SCRIPT}</script>
 </body>
 </html>
 `;
