@@ -25,6 +25,20 @@ cd ../website && wrangler deploy
 cd ../admin && wrangler deploy   # then protect it with Access
 ```
 
+To enable the authenticated API (see below), also set a shared API key on
+the website worker:
+
+```bash
+cd website && wrangler secret put API_KEY
+```
+
+## API
+
+The website worker also serves a JSON API: `/status.json` is public, and
+`/api/status` + `/api/service/:id` (per-endpoint history/latency, bearer-token
+authenticated) are new. Full reference: [`docs/API.md`](docs/API.md), also
+available on the site at `/docs`. Machine-readable spec at `/openapi.yaml`.
+
 ## Local dev
 
 ```bash
