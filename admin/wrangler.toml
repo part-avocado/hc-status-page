@@ -1,0 +1,17 @@
+name = "hcdown-admin"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hcdown"
+database_id = "55eda029-ecd1-4751-a204-8e2a023b76f0"
+
+# Simulates a signed-in Cloudflare Access identity for `wrangler dev` only.
+# Has no effect once deployed -- production auth is enforced by Cloudflare
+# Access itself (see README: you must enable it on this Worker after first deploy).
+[access.dev]
+aud = "hcdown-admin-dev"
+
+[access.dev.identity]
+email = "dev@example.com"

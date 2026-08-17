@@ -1,0 +1,11 @@
+name = "hcdown-pinger"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[triggers]
+crons = ["*/1 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hcdown"
+database_id = "55eda029-ecd1-4751-a204-8e2a023b76f0"

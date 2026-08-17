@@ -1,0 +1,9 @@
+{
+  "name": "hcdown",
+  "private": true,
+  "workspaces": [
+    "pinger",
+    "website",
+    "admin"
+  ]
+}
