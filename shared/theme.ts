@@ -23,13 +23,25 @@ export const BASE_CSS = `
   }
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--fg); margin: 0; padding: 2rem 1rem; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+  display: flex;
+}
 .doc {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
   font-size: 14px;
   line-height: 1.6;
   max-width: 900px;
+  width: 100%;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 .doc pre {
   margin: 0;
@@ -61,7 +73,7 @@ details.group[open] summary::before { content: "[-] "; }
 .hist-none { color: var(--none); }
 .dim { color: var(--dim); }
 .detail-table { margin-top: 1em; }
-.footer { margin-top: 3em; text-align: center; }
+.doc pre.footer { margin-top: auto; padding-top: 3em; text-align: center; }
 .hday { position: relative; }
 .hday .tt {
   position: absolute;
