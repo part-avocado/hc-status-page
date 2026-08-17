@@ -529,8 +529,8 @@ const DETAIL_TABLE_WIDTH = detailHeaderRow().length;
 
 export function renderEndpointDetail(detail: EndpointDetail, tz: string): string {
   const lines: string[] = [];
-  lines.push(`# hackclub status -- ${detail.name}`);
-  lines.push(`<a href="/">&larr; back to status</a>`);
+  lines.push(`# hackclub status - ${detail.name}`);
+  lines.push(`<a href="/">&lt;- back to status</a>`);
   lines.push("");
   lines.push("=".repeat(DETAIL_TABLE_WIDTH));
   const tag = `<span class="st-${detail.health}">${HEALTH_TAG[detail.health]}</span>`;
@@ -538,11 +538,13 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
   lines.push("=".repeat(DETAIL_TABLE_WIDTH));
   lines.push("");
   const checkedAt = detail.checkedAt == null ? "" : `  <span class="dim">(checked ${fmtTimestampTz(detail.checkedAt, tz)})</span>`;
-  lines.push(`now: ${fmtLatency(detail.latencyMs)}${checkedAt}    7d: ${fmtPct(detail.uptime7d)}    30d: ${fmtPct(detail.uptime30d)}    90d: ${fmtPct(detail.uptime90d)}`);
+  lines.push(`now: ${fmtLatency(detail.latencyMs)}${checkedAt}`);
+  lines.push(`7d: ${fmtPct(detail.uptime7d)}    30d: ${fmtPct(detail.uptime30d)}    90d: ${fmtPct(detail.uptime90d)}`);
   if (detail.error) lines.push(`<span class="dim">${escapeHtml(detail.error)}</span>`);
   lines.push("");
-  lines.push(`<span class="dim">DATE below is UTC calendar day (how it's stored) -- not your local day (${escapeHtml(tz)}).</span>`);
+  lines.push(`<span class="dim">The following is in UTC.</span>`);
   lines.push(`<span class="dim">${escapeHtml(detailHeaderRow())}</span>`);
+  lines.push("");
   lines.push("-".repeat(DETAIL_TABLE_WIDTH));
   for (const d of [...detail.days].reverse()) {
     const { ch, cls } = historyChar(d.pct);
