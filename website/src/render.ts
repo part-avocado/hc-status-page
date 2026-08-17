@@ -8,9 +8,6 @@ function isPrivate(id: string): boolean {
 
 export interface Env {
   DB: D1Database;
-  // Shared secret for the authenticated /api/* JSON routes. Set via
-  // `wrangler secret put API_KEY` -- unset means /api/* is unreachable.
-  API_KEY?: string;
 }
 
 interface CurrentStatusRow {

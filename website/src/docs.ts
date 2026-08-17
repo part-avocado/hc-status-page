@@ -27,7 +27,8 @@ GET /service/:id
   AUTHENTICATED API (requires an API key)
 ====================================================================
 
-Send your key as a bearer token:
+Keys are created (and revoked) from /admin -- shown once at creation, then
+never again. Send yours as a bearer token:
 
   Authorization: Bearer &lt;API_KEY&gt;
 

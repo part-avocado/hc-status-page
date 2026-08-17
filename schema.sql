@@ -36,3 +36,14 @@ CREATE TABLE IF NOT EXISTS daily_stats (
   avg_latency_ms INTEGER NOT NULL,
   PRIMARY KEY (endpoint_id, date)
 );
+
+-- Keys for the authenticated JSON API (website's /api/*), created/revoked
+-- from /admin. Only the SHA-256 hash is stored -- the plaintext key is
+-- shown once at creation time and never persisted.
+CREATE TABLE IF NOT EXISTS api_keys (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  key_hash TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL,
+  last_used_at INTEGER
+);

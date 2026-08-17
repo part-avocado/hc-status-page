@@ -1,8 +1,16 @@
+import { generateApiKey, sha256Hex } from "../../shared/apiAuth";
 import { endpoints } from "../../shared/endpoints";
 import { BASE_CSS } from "../../shared/theme";
 
 interface Env {
   DB: D1Database;
+}
+
+interface ApiKeyRow {
+  id: string;
+  name: string;
+  created_at: number;
+  last_used_at: number | null;
 }
 
 interface SecretEndpointRow {
@@ -56,6 +64,15 @@ button:hover { border-color: var(--fg); }
 button.danger:hover { border-color: var(--down); color: var(--down); }
 .msg { color: var(--up); font-weight: bold; }
 .err { color: var(--down); font-weight: bold; }
+.keybox {
+  display: block;
+  padding: 0.5em 0.75em;
+  margin: 0.5em 0;
+  border: 1px solid var(--dim);
+  border-radius: 4px;
+  word-break: break-all;
+  user-select: all;
+}
 `;
 
 function page(bodyHtml: string, email: string): string {
@@ -127,6 +144,67 @@ id must not collide with any id in shared/endpoints.ts or another row here.</pre
   }
 
   return parts.join("\n");
+}
+
+function fmtDate(ms: number | null): string {
+  return ms == null ? "never" : new Date(ms).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+}
+
+async function renderKeys(env: Env, opts?: { message?: string; error?: string; newKey?: { name: string; value: string } }): Promise<string> {
+  const rows = await env.DB.prepare("SELECT id, name, created_at, last_used_at FROM api_keys ORDER BY created_at DESC").all<ApiKeyRow>();
+
+  const parts: string[] = [];
+  if (opts?.newKey) {
+    parts.push(
+      `<p class="msg">created "${escapeHtml(opts.newKey.name)}" -- copy this key now, it will not be shown again:</p>` +
+        `<code class="keybox">${escapeHtml(opts.newKey.value)}</code>`,
+    );
+  }
+  if (opts?.message) parts.push(`<p class="msg">${escapeHtml(opts.message)}</p>`);
+  if (opts?.error) parts.push(`<p class="err">${escapeHtml(opts.error)}</p>`);
+
+  parts.push(`<pre>API KEYS (${rows.results.length})
+=========================
+Used for the authenticated JSON API (GET /api/status, GET /api/service/:id).
+A key is only ever shown once, right after you create it.</pre>
+<form method="post" action="/admin/keys" class="row">
+  <div class="field"><label>name</label><input type="text" name="name" placeholder="hackatime bot" required></div>
+  <div><button type="submit">create key</button></div>
+</form>`);
+
+  if (rows.results.length === 0) {
+    parts.push(`<pre class="dim">none yet</pre>`);
+  }
+
+  for (const row of rows.results) {
+    parts.push(`
+<form method="post" action="/admin/keys/${encodeURIComponent(row.id)}/delete" class="row">
+  <div class="rowhead"><b>${escapeHtml(row.name)}</b> <span class="dim">created ${fmtDate(row.created_at)} &middot; last used ${fmtDate(row.last_used_at)}</span></div>
+  <div><button type="submit" class="danger">revoke</button></div>
+</form>`);
+  }
+
+  return parts.join("\n");
+}
+
+// Both sections (endpoints + API keys) render together on every /admin
+// response -- an action in one section shouldn't make the other vanish.
+async function renderPage(
+  env: Env,
+  opts?: {
+    debug?: string;
+    listMessage?: string;
+    listError?: string;
+    keysMessage?: string;
+    keysError?: string;
+    newKey?: { name: string; value: string };
+  },
+): Promise<string> {
+  const [list, keys] = await Promise.all([
+    renderList(env, opts?.listMessage, opts?.listError),
+    renderKeys(env, { message: opts?.keysMessage, error: opts?.keysError, newKey: opts?.newKey }),
+  ]);
+  return (opts?.debug ?? "") + list + keys;
 }
 
 interface ParsedFields {
@@ -206,7 +284,7 @@ export default {
       const debug = `<details><summary class="dim">debug: your identity claims</summary><pre class="dim">${escapeHtml(
         JSON.stringify(identity, null, 2),
       )}</pre></details>`;
-      return new Response(page(debug + (await renderList(env)), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(page(await renderPage(env, { debug }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
     }
 
     // Add a new sensitive endpoint.
@@ -214,24 +292,24 @@ export default {
       const form = await req.formData();
       const id = String(form.get("id") ?? "").trim();
       if (!id || !/^[A-Za-z0-9._!-]+$/.test(id)) {
-        return new Response(page(await renderList(env, undefined, "id is required and may only contain letters, numbers, . _ ! -"), email), {
+        return new Response(page(await renderPage(env, { listError: "id is required and may only contain letters, numbers, . _ ! -" }), email), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
       if (endpoints.some((e) => e.id === id)) {
-        return new Response(page(await renderList(env, undefined, `id "${id}" is already used by a normal endpoint in shared/endpoints.ts`), email), {
+        return new Response(page(await renderPage(env, { listError: `id "${id}" is already used by a normal endpoint in shared/endpoints.ts` }), email), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
       const existing = await env.DB.prepare("SELECT 1 FROM secret_endpoints WHERE id = ?").bind(id).first();
       if (existing) {
-        return new Response(page(await renderList(env, undefined, `id "${id}" already exists -- edit it below instead`), email), {
+        return new Response(page(await renderPage(env, { listError: `id "${id}" already exists -- edit it below instead` }), email), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
       const parsed = parseFields(form);
       if ("error" in parsed) {
-        return new Response(page(await renderList(env, undefined, parsed.error), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+        return new Response(page(await renderPage(env, { listError: parsed.error }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
       }
       await env.DB.prepare(
         `INSERT INTO secret_endpoints (id, name, url, method, expected_status_lo, expected_status_hi, timeout_ms, degraded_latency_ms)
@@ -239,7 +317,7 @@ export default {
       )
         .bind(id, parsed.name, parsed.url, parsed.method, parsed.expectedLo, parsed.expectedHi, parsed.timeoutMs, parsed.degradedLatencyMs)
         .run();
-      return new Response(page(await renderList(env, `added ${id}`), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(page(await renderPage(env, { listMessage: `added ${id}` }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
     }
 
     const editMatch = url.pathname.match(/^\/admin\/endpoints\/([^/]+)$/);
@@ -248,7 +326,7 @@ export default {
       const form = await req.formData();
       const parsed = parseFields(form);
       if ("error" in parsed) {
-        return new Response(page(await renderList(env, undefined, parsed.error), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+        return new Response(page(await renderPage(env, { listError: parsed.error }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
       }
       const result = await env.DB.prepare(
         `UPDATE secret_endpoints SET name = ?, url = ?, method = ?, expected_status_lo = ?, expected_status_hi = ?, timeout_ms = ?, degraded_latency_ms = ?
@@ -256,16 +334,41 @@ export default {
       )
         .bind(parsed.name, parsed.url, parsed.method, parsed.expectedLo, parsed.expectedHi, parsed.timeoutMs, parsed.degradedLatencyMs, id)
         .run();
-      const message = result.meta.changes > 0 ? `saved ${id}` : undefined;
-      const error = result.meta.changes > 0 ? undefined : `id "${id}" not found`;
-      return new Response(page(await renderList(env, message, error), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+      const listMessage = result.meta.changes > 0 ? `saved ${id}` : undefined;
+      const listError = result.meta.changes > 0 ? undefined : `id "${id}" not found`;
+      return new Response(page(await renderPage(env, { listMessage, listError }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
     }
 
     const deleteMatch = url.pathname.match(/^\/admin\/endpoints\/([^/]+)\/delete$/);
     if (req.method === "POST" && deleteMatch) {
       const id = decodeURIComponent(deleteMatch[1]);
       await env.DB.prepare("DELETE FROM secret_endpoints WHERE id = ?").bind(id).run();
-      return new Response(page(await renderList(env, `deleted ${id}`), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(page(await renderPage(env, { listMessage: `deleted ${id}` }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
+    }
+
+    // Create a new API key.
+    if (req.method === "POST" && url.pathname === "/admin/keys") {
+      const form = await req.formData();
+      const name = String(form.get("name") ?? "").trim();
+      if (!name) {
+        return new Response(page(await renderPage(env, { keysError: "name is required" }), email), {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+      const id = crypto.randomUUID();
+      const plainKey = generateApiKey();
+      const keyHash = await sha256Hex(plainKey);
+      await env.DB.prepare("INSERT INTO api_keys (id, name, key_hash, created_at) VALUES (?, ?, ?, ?)").bind(id, name, keyHash, Date.now()).run();
+      return new Response(page(await renderPage(env, { newKey: { name, value: plainKey } }), email), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+
+    const keyDeleteMatch = url.pathname.match(/^\/admin\/keys\/([^/]+)\/delete$/);
+    if (req.method === "POST" && keyDeleteMatch) {
+      const id = decodeURIComponent(keyDeleteMatch[1]);
+      await env.DB.prepare("DELETE FROM api_keys WHERE id = ?").bind(id).run();
+      return new Response(page(await renderPage(env, { keysMessage: "revoked" }), email), { headers: { "content-type": "text/html; charset=utf-8" } });
     }
 
     return new Response("not found\n", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });

@@ -4,7 +4,7 @@ import { renderApiDocsHtml } from "./docs";
 import { gatherEndpointDetail, gatherStatus, renderEndpointDetail, renderHtml, type Env } from "./render";
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const { pathname } = new URL(req.url);
     // Geolocated from the request's IP by Cloudflare -- no lookup needed.
     // Storage stays UTC; this only affects how timestamps are displayed.
@@ -33,12 +33,12 @@ export default {
 
     // Authenticated JSON API -- see docs/API.md.
     if (pathname === "/api/status") {
-      if (!checkApiKey(req, env)) return unauthorized();
+      if (!(await checkApiKey(req, env, ctx))) return unauthorized();
       const data = await gatherStatus(env);
       return Response.json({ ...data, viewerTimezone: tz });
     }
     if (pathname.startsWith("/api/service/")) {
-      if (!checkApiKey(req, env)) return unauthorized();
+      if (!(await checkApiKey(req, env, ctx))) return unauthorized();
       const id = decodeURIComponent(pathname.slice("/api/service/".length));
       const detail = await gatherEndpointDetail(env, id);
       if (!detail) return Response.json({ error: "not found" }, { status: 404 });
