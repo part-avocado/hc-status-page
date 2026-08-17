@@ -48,8 +48,16 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* Fixed-width column tables would have their alignment destroyed by the
+   word-wrapping above on narrow screens, so they scroll horizontally
+   instead of wrapping. */
+.doc pre.mono-table {
+  white-space: pre;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
 a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
-a:hover { text-decoration: underline solid; }
 .banner { font-weight: bold; }
 .banner-operational { color: var(--up); }
 .banner-degraded { color: var(--warn); }
@@ -104,5 +112,15 @@ details.group[open] summary::before { content: "[-] "; }
   border-top-color: #1a1a1a;
 }
 .hday .tt b { display: block; font-weight: bold; }
-.hday:hover .tt { opacity: 1; visibility: visible; }
+/* Scoped to real (mouse-like) pointers only -- on touch devices ":hover"
+   fires on tap and then sticks until something else is tapped, leaving
+   the tooltip stuck open with no way to dismiss it. */
+@media (hover: hover) and (pointer: fine) {
+  a:hover { text-decoration: underline solid; }
+  .hday:hover .tt { opacity: 1; visibility: visible; }
+}
+@media (max-width: 640px) {
+  body { padding: 1.25rem 0.75rem; }
+  .doc { font-size: 12.5px; }
+}
 `.trim();

@@ -470,8 +470,25 @@ function groupTableHtml(group: StatusGroup): string {
     if (ep.error) lines.push(`${" ".repeat(COL_STATUS)}<span class="dim">${escapeHtml(ep.error)}</span>`);
     lines.push("");
   }
-  return `<pre>${lines.join("\n")}</pre>`;
+  return `<pre class="mono-table">${lines.join("\n")}</pre>`;
 }
+
+// Restores each collapsible group's open/closed state from localStorage on
+// load (overriding the server-rendered default) and saves it back on every
+// toggle, so it survives the page's 60s meta-refresh reload.
+const COLLAPSE_STATE_SCRIPT = `(function () {
+  var KEY = "hcstatus:groupOpen";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  document.querySelectorAll("details.group[data-group]").forEach(function (d) {
+    var key = d.getAttribute("data-group");
+    if (Object.prototype.hasOwnProperty.call(state, key)) d.open = state[key];
+    d.addEventListener("toggle", function () {
+      state[key] = d.open;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    });
+  });
+})();`;
 
 export function renderHtml(data: StatusData, tz: string): string {
   const intro: string[] = [];
@@ -488,7 +505,7 @@ export function renderHtml(data: StatusData, tz: string): string {
     const name = escapeHtml(group.name.toUpperCase());
     const table = groupTableHtml(group);
     if (group.collapsible) {
-      return `<details class="group"${group.collapsed ? "" : " open"}><summary class="group-name">${name}</summary>${table}</details>`;
+      return `<details class="group" data-group="${escapeHtml(group.name)}"${group.collapsed ? "" : " open"}><summary class="group-name">${name}</summary>${table}</details>`;
     }
     return `<pre class="group-name">${name}</pre>${table}`;
   });
@@ -508,6 +525,7 @@ export function renderHtml(data: StatusData, tz: string): string {
 ${sections.join("\n")}
 ${footerHtml()}
 </div>
+<script>${COLLAPSE_STATE_SCRIPT}</script>
 </body>
 </html>
 `;
@@ -547,8 +565,8 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
   if (detail.error) lines.push(`<span class="dim">${escapeHtml(detail.error)}</span>`);
   lines.push("");
   lines.push(`<span class="dim">The following is in UTC.</span>`);
-  lines.push(`<span class="dim">${escapeHtml(detailHeaderRow())}</span>`);
   lines.push("");
+  lines.push(`<span class="dim">${escapeHtml(detailHeaderRow())}</span>`);
   lines.push("-".repeat(DETAIL_TABLE_WIDTH));
   for (const d of [...detail.days].reverse()) {
     const { ch, cls } = historyChar(d.pct);
@@ -572,7 +590,7 @@ export function renderEndpointDetail(detail: EndpointDetail, tz: string): string
 </head>
 <body>
 <div class="doc">
-<pre class="detail-table">${lines.join("\n")}</pre>
+<pre class="detail-table mono-table">${lines.join("\n")}</pre>
 ${footerHtml()}
 </div>
 </body>
