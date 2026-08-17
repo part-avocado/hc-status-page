@@ -16,12 +16,6 @@ export const endpoints: EndpointConfig[] = [
     url: "https://hackclub.com",
   },
   {
-    id: "hackclub-slack",
-    name: "Slack",
-    group: "Important",
-    url: "https://hackclub.slack.com",
-  },
-  {
     id: "hcb",
     name: "HCB",
     group: "Important",
