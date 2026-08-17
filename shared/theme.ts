@@ -100,7 +100,12 @@ details.group[open] summary::before { content: "[-] "; }
 .hday { position: relative; }
 .hday .tt {
   position: absolute;
-  bottom: 130%;
+  /* bottom: 100% + a fixed margin, not a bigger bottom percentage -- percentages
+     here resolve against the dot's inline line-box, which .doc's line-height: 1.6
+     inflates well past the glyph's own size, so a percentage offset leaves an
+     oversized gap between the tooltip and the dot it's pointing at. */
+  bottom: 100%;
+  margin-bottom: 7px;
   left: 50%;
   transform: translateX(-50%);
   background: #1a1a1a;
