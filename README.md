@@ -22,7 +22,7 @@ Then deploy each worker:
 ```bash
 cd pinger && wrangler deploy
 cd ../website && wrangler deploy
-cd ../admin && wrangler deploy   # then protect it with Access -- see above
+cd ../admin && wrangler deploy   # then protect it with Access
 ```
 
 ## Local dev
@@ -32,5 +32,3 @@ cd pinger && npm run dev     # GET / on the local pinger runs one check pass imm
 cd website && npm run dev    # GET / for the status page
 cd admin && npm run dev      # GET /admin, using the simulated identity in wrangler.toml
 ```
-
-Both `wrangler.toml` files need to point at the same D1 `database_id` for local dev too (wrangler dev uses a local SQLite copy of that database by default).
