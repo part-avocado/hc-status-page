@@ -70,7 +70,7 @@ function page(bodyHtml: string, email: string): string {
 <body>
 <div class="doc">
 <pre># hcdown admin
-logged in as ${escapeHtml(email)} -- <a href="/cdn-cgi/access/logout">sign out</a></pre>
+logged in as ${escapeHtml(email)} - <a href="/cdn-cgi/access/logout">sign out</a></pre>
 ${bodyHtml}
 </div>
 </body>
@@ -98,9 +98,8 @@ async function renderList(env: Env, message?: string, error?: string): Promise<s
 
   parts.push(`<pre>ADD A SENSITIVE ENDPOINT
 =========================
-Fully self-contained: pings start as soon as you save. Not visible on the public
-site/status.txt/status.json unless you also give it an id (below) prefixed
-"!PRIVATE." -- otherwise its name/status/uptime are public, only the URL is hidden.
+Not visible publicly unless you also give it an id (below) prefixed
+"!PRIVATE."
 id must not collide with any id in shared/endpoints.ts or another row here.</pre>
 <form method="post" action="/admin/endpoints" class="row">
   <label class="field"><label>id</label><input type="text" name="id" placeholder="my-new-endpoint" required></label>
