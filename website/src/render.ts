@@ -310,16 +310,22 @@ function fmtPct(p: number | null): string {
   return p == null ? "--" : `${p.toFixed(2)}%`;
 }
 
+// "·" (middle dot) rather than "." -- periods sit low/narrow in a monospace
+// cell and read as unevenly spaced at small sizes; the middle dot is
+// vertically centered and holds a consistent rhythm across a run (same
+// reasoning as the no-data glyph in historyChar below).
+const FILL_CHAR = "·";
+
 function padDots(s: string, width: number): string {
   if (s.length >= width) return s + " ";
-  return s + " " + ".".repeat(Math.max(1, width - s.length - 1)) + " ";
+  return s + " " + FILL_CHAR.repeat(Math.max(1, width - s.length - 1)) + " ";
 }
 
-// Same padding as padDots, but returns just the ". . . " tail -- for HTML,
-// where the name itself becomes a link and the dots stay plain text.
+// Same padding as padDots, but returns just the fill tail -- for HTML,
+// where the name itself becomes a link and the fill stays plain text.
 function padDotsTail(s: string, width: number): string {
   if (s.length >= width) return " ";
-  return " " + ".".repeat(Math.max(1, width - s.length - 1)) + " ";
+  return " " + FILL_CHAR.repeat(Math.max(1, width - s.length - 1)) + " ";
 }
 
 // A decorative "=" divider line, wrapped so it can be styled to stop at the
