@@ -471,10 +471,9 @@ function groupTableHtml(group: StatusGroup): string {
 export function renderHtml(data: StatusData, tz: string): string {
   const intro: string[] = [];
   intro.push("# hackclub status");
-  intro.push(`# updated ${fmtTimestampTz(data.generatedAt, tz)} -- refreshes every 60s -- <a href="/status.txt">/status.txt</a> -- <a href="/status.json">/status.json</a>`);
-  intro.push(`# NOW = most recent check. 7D/30D/90D and the trailing bar are daily aggregates, so a flapping endpoint can show NOW=up with a red day.`);
-  intro.push(`# Timestamps above are shown in your local time (detected: ${escapeHtml(tz)}). Day buckets below are UTC calendar days (how they're stored), so a local day can span two UTC-dated rows near UTC midnight.`);
-  intro.push(`# Click a service name for its full per-day history.`);
+  intro.push(`# updated ${fmtTimestampTz(data.generatedAt, tz)}`);
+  intro.push("");
+  intro.push(`! Timestamps above are shown in your local time (detected: ${escapeHtml(tz)}). Day buckets below are UTC calendar days.`);
   intro.push("");
   intro.push("=".repeat(TABLE_WIDTH));
   intro.push(`  <span class="banner banner-${data.overall}">${bannerLine(data.overall)}</span>`);
