@@ -421,10 +421,9 @@ function dataRow(ep: EndpointStatus) {
 export function renderText(data: StatusData, tz: string): string {
   const lines: string[] = [];
   lines.push("# hackclub status");
-  lines.push(`# updated ${fmtTimestampTz(data.generatedAt, tz)} -- refreshes every 60s`);
-  lines.push(`# NOW = most recent check. 7D/30D/90D and the ${BAR_DAYS}-day bar below each row are daily aggregates, so a flapping endpoint can show NOW=up with a red day.`);
-  lines.push(`# Timestamps above are shown in your local time (detected: ${tz}). Day buckets below are UTC calendar days (how they're stored), so a local day can span two UTC-dated rows near UTC midnight.`);
-  lines.push("# Full per-day history: /service/<id> (e.g. /service/hcb)");
+  lines.push(`# updated ${fmtTimestampTz(data.generatedAt, tz)}`);
+  lines.push("");
+  lines.push(`# Timestamps above are shown in your local time (detected: ${tz}). Day buckets below are formatted in UTC.`);
   lines.push("");
   lines.push("=".repeat(TABLE_WIDTH));
   lines.push(`  ${bannerLine(data.overall)}`);
