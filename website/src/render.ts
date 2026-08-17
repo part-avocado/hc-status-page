@@ -316,16 +316,27 @@ function fmtPct(p: number | null): string {
 // reasoning as the no-data glyph in historyChar below).
 const FILL_CHAR = "·";
 
-function padDots(s: string, width: number): string {
-  if (s.length >= width) return s + " ";
-  return s + " " + FILL_CHAR.repeat(Math.max(1, width - s.length - 1)) + " ";
+// The fill run needs to know the latency string it's leading up to, not just
+// a fixed column width -- otherwise the dots stop at COL_SERVICE and the
+// latency's own right-alignment padding leaves a second, dot-less gap
+// between the last dot and the number. Sizing the fill against COL_SERVICE +
+// COL_NUM - latencyStr.length instead makes the dots run straight up to the
+// number, while the combined name+fill+latency segment still totals exactly
+// COL_SERVICE + COL_NUM characters -- so the 7D/30D/90D columns after it
+// stay aligned exactly as before.
+function fillWidth(nameLen: number, latencyLen: number): number {
+  return Math.max(1, COL_SERVICE + COL_NUM - nameLen - latencyLen - 2);
 }
 
-// Same padding as padDots, but returns just the fill tail -- for HTML,
-// where the name itself becomes a link and the fill stays plain text.
-function padDotsTail(s: string, width: number): string {
-  if (s.length >= width) return " ";
-  return " " + FILL_CHAR.repeat(Math.max(1, width - s.length - 1)) + " ";
+function padDots(s: string, latencyStr: string): string {
+  return s + " " + FILL_CHAR.repeat(fillWidth(s.length, latencyStr.length)) + " " + latencyStr;
+}
+
+// Same padding as padDots, but returns just the fill-plus-latency tail --
+// for HTML, where the name itself becomes a link and the fill stays plain
+// text.
+function padDotsTail(s: string, latencyStr: string): string {
+  return " " + FILL_CHAR.repeat(fillWidth(s.length, latencyStr.length)) + " " + latencyStr;
 }
 
 // A decorative "=" divider line, wrapped so it can be styled to stop at the
@@ -439,10 +450,11 @@ function headerRow(): string {
 const TABLE_WIDTH = headerRow().length;
 
 function dataRow(ep: EndpointStatus) {
+  // service already has the latency folded into its tail (see padDots) --
+  // there's no separate .latency field to concatenate after it.
   return {
     status: HEALTH_TAG[ep.health].padEnd(COL_STATUS),
-    service: padDots(ep.name, COL_SERVICE),
-    latency: fmtLatency(ep.latencyMs).padStart(COL_NUM),
+    service: padDots(ep.name, fmtLatency(ep.latencyMs)),
     u7: fmtPct(ep.uptime7d).padStart(COL_NUM),
     u30: fmtPct(ep.uptime30d).padStart(COL_NUM),
     u90: fmtPct(ep.uptime90d).padStart(COL_NUM),
@@ -469,7 +481,7 @@ export function renderText(data: StatusData, tz: string): string {
     for (const ep of group.endpoints) {
       const r = dataRow(ep);
       const hist = ep.history.map((d) => historyChar(d.pct).ch).join("");
-      lines.push(`${r.status}${r.service}${r.latency}${r.u7}${r.u30}${r.u90}`);
+      lines.push(`${r.status}${r.service}${r.u7}${r.u30}${r.u90}`);
       lines.push(`${" ".repeat(COL_STATUS)}${hist}`);
       if (ep.error) lines.push(`${" ".repeat(COL_STATUS)}${ep.error}`);
       lines.push("");
@@ -489,9 +501,9 @@ function groupTableHtml(group: StatusGroup): string {
   for (const ep of group.endpoints) {
     const r = dataRow(ep);
     const tag = `<span class="st-${ep.health}">${r.status}</span>`;
-    const service = `<a href="${serviceHref(ep.id)}">${escapeHtml(ep.name)}</a>${padDotsTail(ep.name, COL_SERVICE)}`;
+    const service = `<a href="${serviceHref(ep.id)}">${escapeHtml(ep.name)}</a>${padDotsTail(ep.name, fmtLatency(ep.latencyMs))}`;
     const hist = ep.history.map(historyDaySpan).join("");
-    lines.push(`${tag}${service}${r.latency}${r.u7}${r.u30}${r.u90}`);
+    lines.push(`${tag}${service}${r.u7}${r.u30}${r.u90}`);
     lines.push(`${" ".repeat(COL_STATUS)}<span class="hist-row">${hist}</span>`);
     if (ep.error) lines.push(`${" ".repeat(COL_STATUS)}<span class="dim">${escapeHtml(ep.error)}</span>`);
     lines.push("");
