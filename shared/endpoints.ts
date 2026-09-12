@@ -7,7 +7,6 @@ export const groups: GroupConfig[] = [
   { name: "Core Websites", collapsible: true, collapsed: false },
   { name: "Authentication", collapsible: true, collapsed: true},
   { name: "Services", collapsible: true, collapsed: true},
-  { name: "YSWS", collapsible: true, collapsed: true},
 ];
 
 export const endpoints: EndpointConfig[] = [
@@ -44,25 +43,6 @@ export const endpoints: EndpointConfig[] = [
     name: "Lapse",
     group: "Services",
     url: "https://lapse.hackclub.com/",
-  },
-
-// ysws
-  {
-    id: "stardance-ysws",
-    name: "Stardance - YSWS",
-    group: "YSWS",
-    url: "https://stardance.hackclub.com/up",
-  },
-  {
-    id: "macondo-ysws",
-    name: "Macondo - YSWS",
-    group: "YSWS",
-    url: "https://macondo.hackclub.com",
-  },
-  {
-    id: "braize-ysws",
-    name: "Braize - YSWS",
-    group: "YSWS",
-    url: "https://braize.hackclub.com",
+  }
   },
 ];
