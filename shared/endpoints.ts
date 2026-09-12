@@ -43,6 +43,5 @@ export const endpoints: EndpointConfig[] = [
     name: "Lapse",
     group: "Services",
     url: "https://lapse.hackclub.com/",
-  }
   },
 ];
