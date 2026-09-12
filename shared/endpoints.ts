@@ -50,4 +50,10 @@ export const endpoints: EndpointConfig[] = [
     group: "Services",
     url: "https://nemo.hackclub.com/up",
   },
+  { 
+    id: "ai",
+    name: "HCAI",
+    group: "Services",
+    url: "https://ai.hackclub.com/up",
+  },
 ];
