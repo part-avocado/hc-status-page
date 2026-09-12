@@ -44,4 +44,10 @@ export const endpoints: EndpointConfig[] = [
     group: "Services",
     url: "https://lapse.hackclub.com/",
   },
+  {
+    id: "nemo",
+    name: "Mnemosyne",
+    group: "Services",
+    url: "https://nemo.hackclub.com/up",
+  },
 ];
