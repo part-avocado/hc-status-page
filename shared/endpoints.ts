@@ -31,7 +31,7 @@ export const endpoints: EndpointConfig[] = [
     url: "https://auth.hackclub.com/up",
   },
 
-// timing group
+// services group
   {
     id: "hackatime",
     name: "Hackatime",
@@ -56,4 +56,16 @@ export const endpoints: EndpointConfig[] = [
     group: "Services",
     url: "https://ai.hackclub.com/up",
   },
+  {
+    id: "spaces",
+    name: "Spaces - Frontend",
+    group: "Services",
+    url: "https://spaces.hackclub.com/up",
+  },
+  {
+    id: "spaces-be",
+    name: "Spaces - Backend",
+    group: "Services",
+    url: "https://spaces.hackclub.com/api/v1/up",
+  }
 ];
